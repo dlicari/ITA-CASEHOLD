@@ -5,7 +5,7 @@ nltk.download("punkt")
 import pandas as pd
 import numpy as np
 
-
+#calculates ItaRouge scores 
 class ItaRouge(Rouge):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
