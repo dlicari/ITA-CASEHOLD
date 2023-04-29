@@ -6,9 +6,9 @@ Legal holdings are used in Italy as a critical component of the legal system, se
 
 We introduce a legal holding extraction method based on Italian-LEGAL-BERT to automatically extract legal holdings from Italian cases. In addition, we present ITA-CaseHold, a benchmark dataset for Italian legal summarization. We conducted several experiments using this dataset, as a valuable baseline for future research on this topic.
 
-### Steps to run the experiments
+### Instructions to run the experiments
 
-#### 0. Requirements
+#### Requirements
 Please install all requirements from requirements.txt file
     `pip install -r requirements.txt`
 We used `torch==1.13.1` and `python 3.8.10` for our experiments
@@ -20,6 +20,12 @@ We used `torch==1.13.1` and `python 3.8.10` for our experiments
 
 #### Datasets
 Contains train, test, validation along with the presented EDA in the paper
+
+To download the dataset from huggingface, please use the following lines:
+    
+        from datasets import load_dataset
+        dataset = load_dataset("itacasehold/itacasehold")
+
 
 To run the EDA `python eda.py`. The results are updated in the outputs folder
 
