@@ -58,7 +58,7 @@ def pre_processing(df):
 
 def generate_hm_rouge_scores(df):
     ''' 
-    generate rouge scores for each sentence in the dataframe 
+    generate harmonice mean rouge scores for each sentence in the dataframe 
     Args:
       df: dataframe
     Returns:
