@@ -12,7 +12,6 @@ from simpletransformers.classification import (ClassificationArgs,
 
 nltk.download("punkt")
 import argparse
-import sys
 from ItaRouge import *
 from AmRouge import *
 from HmRouge import *
@@ -263,6 +262,12 @@ def run_hm(train, test, val):
 
 
 def model_run():
+    '''
+    Args:
+        model: either arithmetic_mean_bert or harmonic_mean_bert
+    Returns:
+        runs the model and prints the results
+    '''
     train = pd.read_csv('./Datasets/df_train.csv')
     test  = pd.read_csv('./Datasets/df_test.csv')
     val  = pd.read_csv('./Datasets/df_val.csv')
