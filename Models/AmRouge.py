@@ -56,7 +56,7 @@ def pre_processing(df):
 
 def generate_am_rouge_scores(df):
     ''' 
-    generate rouge scores for each sentence in the dataframe 
+    generate arithmetic mean rouge scores for each sentence in the dataframe 
     Args:
       df: dataframe
     Returns:
