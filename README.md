@@ -60,4 +60,11 @@ or
 Note:
 `BERT Extractive Models also consists Evaluation and testing of the models. The results will be sent to outputs folder in json files. The trained model will be saved in outputs/best_model folder, please change the path in the code to save trained models of Hm-Bert and Am-Bert in different folders.`
 
+LeaderBoard:
 
+| Model | Encoder    | R-1 | R-2 | R-L | R-W |
+| :---:   | :---: | :---: | :---: | :---: | :---: |
+| LexRank | ITA-LEGAL-BERT  | 46.79  | 23.49 | 27.25 | 9.42 |
+| AM-BERT | ITA-LEGAL-BERT  | 52.34  | 32.60 | 28.89 | 10.53 |
+| HM-BERT | ITA-LEGAL-BERT  | **54.41** | **36.28** | 30.33 | **11.24**|
+| HM-BERT | ITA-LEGAL-BERT-SC | 53.66 | 34.34 | **30.64** | 11.21 |
