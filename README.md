@@ -46,21 +46,21 @@ The results are stores in the output folder
 
 #### BERT Extractive Models 
 
-The file `run_model.py` contains the training, validation and testing of both the HM-BERT and AM-BERT models. The encoder in this experiment is `Italian-LEGAL-BERT`, you can change it and run it with any Encoder. 
+The file `run_model.py` contains the training, validation and testing of both the HM-BERT and AM-BERT models with different encoders. The code runs only the encoders used in the paper. Default encoder is `dlicari/Italian-Legal-BERT`. And the default out put path is `.outputs/best_model`. 
 
 Usage:
 
-     python run_model.py --model arithmetic_mean_bert
+To run HM-BERT with Italian Legal BERT SC, you can run the following:
 
-or
+     python run_model.py --model harmonic_mean_bert --encoder 'dlicari/Italian-Legal-BERT-SC' --path '.results/'
 
-     python run_model.py --model harmonic_mean_bert
+
 
 
 Note:
 `BERT Extractive Models also consists Evaluation and testing of the models. The results will be sent to outputs folder in json files. The trained model will be saved in outputs/best_model folder, please change the path in the code to save trained models of Hm-Bert and Am-Bert in different folders.`
 
-LeaderBoard:
+#### LeaderBoard:
 
 | Model | Encoder    | R-1 | R-2 | R-L | R-W |
 | :---:   | :---: | :---: | :---: | :---: | :---: |
