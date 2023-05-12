@@ -11,22 +11,29 @@ from simpletransformers.classification import (ClassificationArgs,
                                                ClassificationModel)
 
 nltk.download("punkt")
-import argparse
+from pathlib import Path
+import argparse, os
 from ItaRouge import *
 from AmRouge import *
 from HmRouge import *
 
 
-parser = argparse.ArgumentParser(description='Please select arithmetic_mean_bert or harmonic_mean_bert')
-parser.add_argument('--model', type=str, default='harmonic_mean_bert', help='please select arithmetic_mean or harmonic_mean')
+parser = argparse.ArgumentParser(description='Please select arithmetic_mean or harmonic_mean')
+parser.add_argument('--model', type=str, default='harmonic_mean', help='please select arithmetic_mean or harmonic_mean')
+parser.add_argument('--encoder', type=str, default = 'dlicari/Italian-Legal-BERT', help = 'please select only encoders mentioned in paper')
+parser.add_argument('--path', type = str, default = './outputs/best_model')
 args = parser.parse_args()
 
+def dir_path(path):
+    if os.path.isdir(path):
+        return path
+    else:
+        os.path.mkdir(path)
 
 def prepare_results(p, r, f):
     return "\t{}:\t{}: {:5.2f}\t{}: {:5.2f}\t{}: {:5.2f}".format(
         metric, "P", 100.0 * p, "R", 100.0 * r, "F1", 100.0 * f
     )
-
 
 def print_scores(scores_dict):
     for k, v in scores_dict.items():
@@ -37,23 +44,7 @@ def print_scores(scores_dict):
             r = round(values['r'] * 100, 2)
             print(f"\t{metric}: P: {p}\tR: {r}\tF1: {f1}")
 
-            
-def prepare_results(p, r, f):
-    return "\t{}:\t{}: {:5.2f}\t{}: {:5.2f}\t{}: {:5.2f}".format(
-        metric, "P", 100.0 * p, "R", 100.0 * r, "F1", 100.0 * f
-    )
 
-
-def print_scores(scores_dict):
-    for k, v in scores_dict.items():
-        print(f"{k}:")
-        for metric, values in v.items():
-            f1 = round(values['f'] * 100, 2)
-            p = round(values['p'] * 100, 2)
-            r = round(values['r'] * 100, 2)
-            print(f"\t{metric}: P: {p}\tR: {r}\tF1: {f1}")
-
-            
 def generate_summary_eval(row, model):
     '''
     generates bert summaries for k values of 3,5,7
@@ -148,7 +139,26 @@ def get_test_results(df):
     return evaluator.get_scores(all_hypothesis, all_references)
 
 
-def training(df_train_sentences,df_val_sentences):
+def f_encoder(encoder):
+    '''
+    Converting huggingface model path to model name mentioned in paper.
+    To store results based on model name from paper
+    Args:
+        Encoder: Huggingface model path
+    returns:
+        returns model name from paper
+    '''
+    f_encoder = ''
+    if encoder == 'dlicari/Italian-Legal-BERT':
+      f_encoder = 'italian_legal_bert'
+    elif encoder == 'dbmdz/bert-base-italian-cased':
+      f_encoder ='italian_bert'
+    else:
+      f_encoder = 'italian_legal_bert_sc'
+    return f_encoder
+
+
+def training(df_train_sentences,df_val_sentences,model_type, encoder):
     '''
     generate rouge scores for each sentence in the train and validation dataframes
     model training
@@ -180,14 +190,14 @@ def training(df_train_sentences,df_val_sentences):
     model_args.train_batch_size = batch_size
     model_args.eval_batch_size = batch_size
     model_args.best_model_dir = (
-        "./outputs/best_model"
-    ) #change this directory based on the model you run, ex: outputs/am_bert/best_model for am_bert
+        f".outputs/best_model"
+    )
     model_args.save_eval_checkpoints = False
     model_args.save_model_every_epoch = False
 
     model = ClassificationModel(
-        "bert",
-        "dlicari/Italian-Legal-BERT",
+        model_type = model_type,
+        model_name = encoder,
         num_labels=1,
         args=model_args,
         use_cuda=True,
@@ -201,27 +211,35 @@ def training(df_train_sentences,df_val_sentences):
     return model
 
 
-def run_am(train, test, val):
-    ''' 
-    trains and predicts arithmetic mean bert
-    Args:
-      train, test, val datasets
+
+def run_am(train, test, val, output_path, model_type, encoder):
+    '''
+    Calculates the Arithmetic Mean BERT.
+    Args: 
+        train, test and validation dataset
+        output_path: To store results
+        model_type: bert, or camembert architecture
+        encoder: the model path from huggingface
     Returns:
-      saves the trained model in directory 'outputs/best_model'  
-      Prints the results of validation k= 3,5,7 and test results
+        returns results into the output path folder
     '''
     df_train_sentences = generate_am_rouge_scores(train)
     df_val_sentences = generate_am_rouge_scores(val)
-    model = training(df_train_sentences, df_val_sentences)
+    path_encoder = f_encoder(encoder)
+    model = training(
+        df_train_sentences, 
+        df_val_sentences, 
+        model_type = model_type,
+        encoder = encoder
+        )
     scores_eval = get_scores_eval(val, model)
-    print_scores(scores_eval)
-
-    with open('./outputs/eval_am_bert_scores.json', 'w') as fp:
+    print_scores(scores_eval)   
+    Path(f"{output_path}").mkdir(parents=True, exist_ok=True)
+    with open(f'{output_path}/am_{path_encoder}_val_scores.json', 'w') as fp:
           json.dump(scores_eval, fp)
-    test["bert_summary"] = test.apply(
-    generate_test_summary, args=(model,), axis=1)
+    test["bert_summary"] = test.apply(generate_test_summary, args=(model,), axis=1)
     scores_test_am = get_test_results(test)
-    with open("./outputs/test_am_bert_scores.json", "w") as fp:
+    with open(f"{output_path}/am_{path_encoder}_test_scores.json", "w") as fp:
           json.dump(scores_test_am, fp)
     #remove this to not print results
     for metric, values in scores_test_am.items():
@@ -231,27 +249,34 @@ def run_am(train, test, val):
         print(f"\t{metric}: P: {precision:>6.2f} R: {recall:>6.2f} F1: {f1_score:>6.2f}")
 
 
-def run_hm(train, test, val):
-    ''' 
-    trains and predicts harmonic mean bert
-    Args:
-      train, test, val datasets
+def run_hm(train, test, val, output_path, model_type, encoder):
+    '''
+    Calculates the Harmonic Mean BERT.
+    Args: 
+        train, test and validation dataset
+        output_path: To store results
+        model_type: bert, or camembert architecture
+        encoder: the model path from huggingface
     Returns:
-      saves the trained model in directory 'outputs/best_model'  
-      Prints the results of validation k= 3,5,7 and test results
+        returns results into the output path folder
     '''
     df_train_sentences = generate_hm_rouge_scores(train)
     df_val_sentences = generate_hm_rouge_scores(val)
-    model = training(df_train_sentences, df_val_sentences)
+    path_encoder = f_encoder(encoder)
+    model = training(
+        df_train_sentences, 
+        df_val_sentences,
+        model_type = model_type,
+        encoder = encoder
+        )
     scores_eval = get_scores_eval(val, model)
-    print_scores(scores_eval)
-
-    with open('./outputs/eval_hm_bert_scores.json', 'w') as fp:
+    print_scores(scores_eval)   
+    Path(f"{output_path}").mkdir(parents=True, exist_ok=True)
+    with open(f'{output_path}/hm_{path_encoder}_val_scores.json', 'w') as fp:
           json.dump(scores_eval, fp)
-    test["bert_summary"] = test.apply(
-    generate_test_summary, args=(model,), axis=1)
+    test["bert_summary"] = test.apply(generate_test_summary, args=(model,), axis=1)
     scores_test_hm = get_test_results(test)
-    with open("./outputs/test_hm_bert_scores.json", "w") as fp:
+    with open(f"{output_path}/hm_{path_encoder}_test_scores.json", "w") as fp:
           json.dump(scores_test_hm, fp)
     #remove this to not print results
     for metric, values in scores_test_hm.items():
@@ -263,21 +288,56 @@ def run_hm(train, test, val):
 
 def model_run():
     '''
-    Args:
-        model: either arithmetic_mean_bert or harmonic_mean_bert
-    Returns:
-        runs the model and prints the results
+    To run the model
     '''
-    train = pd.read_csv('./Datasets/df_train.csv')
-    test  = pd.read_csv('./Datasets/df_test.csv')
-    val  = pd.read_csv('./Datasets/df_val.csv')
+    train = pd.read_csv('.data/df_train.csv')
+    test  = pd.read_csv('.data/df_test.csv')
+    val   = pd.read_csv('.data/df_val.csv')
+    encoder1 = ['dlicari/Italian-Legal-BERT','dbmdz/bert-base-italian-cased']
+    models   = ['harmonic_mean', 'arithmetic_mean']
+    encoder2 = ['dlicari/Italian-Legal-BERT-SC']
 
-    if args.model == 'arithmetic_mean_bert':
-        run_am(train,test,val)
-    elif args.model == 'harmonic_mean_bert':
-        run_hm(train,test,val)
+    if(args.model in models and args.encoder in encoder1):
+        print('model and encoder entered correctly')
+        if args.model == 'arithmetic_mean':
+            run_am(
+                train,
+                test,
+                val, 
+                args.path,
+                model_type = 'bert',
+                encoder = args.encoder)
+        elif args.model == 'harmonic_mean':
+            run_hm(
+                train,
+                test,
+                val, 
+                args.path,
+                model_type = 'bert',
+                encoder = args.encoder
+            )
+    elif(args.model in models and args.encoder in encoder2):
+        print('model and encoder entered correctly')
+        if args.model == 'arithmetic_mean':
+            run_am(
+                train,
+                test,
+                val, 
+                args.path,
+                model_type = 'camembert',
+                encoder = args.encoder)
+        elif args.model == 'harmonic_mean':
+            run_hm(
+                train,
+                test,
+                val, 
+                args.path,
+                model_type = 'camembert',
+                encoder = args.encoder
+            )
     else:
-        parser.error(args,'please use either harmonic_mean_bert or arithmetic_mean_bert as input')
+      raise argparse.ArgumentTypeError(f'Given model({args.model}) or Given encoder({args.encoder}) is not valid. Please use valid encoder and model')
+      
         
 
 if __name__ == "__main__":
