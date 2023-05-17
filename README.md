@@ -48,7 +48,7 @@ The results are stores in the output folder
 
 The file `run_model.py` contains the training, validation and testing of both the HM-BERT and AM-BERT models with different encoders. The code runs only the encoders used in the paper. Default encoder is `dlicari/Italian-Legal-BERT`. And the default out put path is `.outputs/best_model`. 
 
-Usage:
+Example Usage:
 
 To run HM-BERT with Italian Legal BERT SC, you can run the following:
 
