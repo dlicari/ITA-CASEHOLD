@@ -34,7 +34,7 @@ To run the EDA `python eda.py`. The results are updated in the outputs folder
 This folder contains all the models used in the experiments. We have divided the models into two categories
 
     - Lexrank (Baseline)
-    - BERT Extractive Models
+    - BERT Extractive Models (HM-BERT and AM-BERT)
 
 #### Lexrank (Baseline)
 This is the baseline model for the experiments.
