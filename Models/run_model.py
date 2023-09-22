@@ -172,7 +172,7 @@ def training(df_train_sentences,df_val_sentences,model_type, encoder):
     logging.basicConfig(level=logging.DEBUG)
     transformers_logger = logging.getLogger("transformers")
     transformers_logger.setLevel(logging.INFO)
-    max_seq_length = 256
+    max_seq_length = 512
     batch_size = 16
     # Enabling regression
     model_args = ClassificationArgs()
